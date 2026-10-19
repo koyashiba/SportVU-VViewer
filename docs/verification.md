@@ -28,6 +28,23 @@ what is implemented but still unverified. All automated checks: `pytest -q`.
 
 Screenshots from the offscreen viewer on the synthetic scene: `docs/images/`.
 
+## Verified in GitHub Actions with the real pinned model (hosted backend)
+
+CI run [39258427446](https://github.com/koyashiba/SportVU-VViewer/actions/runs/39258427446)
+(`scripts/model_smoke.py --backend roboflow_hosted`, repository secret `RF_API_KEY`):
+
+| check | result |
+|---|---|
+| test suite on ubuntu-latest, macos-latest, windows-latest | all passed |
+| real 1920×1080 broadcast frame from the project's public dataset, 24-frame panning clip, confidence 0.3 | 240 detections, **10.0 players per frame** |
+| ByteTrack id persistence on the real players (camera pan only) | 10 tracks, all 10 span the clip, 0 re-appearances after gaps |
+| team colour clustering on real jerseys | 10/10 tracks assigned, centroid separation 43 (Lab units) |
+| automatic court calibration on the real broadcast frame (moving mode, no manual hint) | **no valid calibration** (confidence 0.04): line evidence from a cluttered arena frame did not yield a consistent court hypothesis, so positions were correctly withheld rather than invented. Manual calibration remains the reference path; automatic calibration on real footage is an open item. |
+| elapsed | 16 s for 24 hosted requests |
+
+The panning clip is a static photo under simulated camera motion, so it does not test occlusions or
+real player motion; those still need real video (see below).
+
 ## Implemented but NOT verified here
 
 | item | why | how to verify |

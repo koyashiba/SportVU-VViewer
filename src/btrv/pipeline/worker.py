@@ -226,6 +226,7 @@ def process_video(cfg: ProcessingConfig, progress: Optional[ProgressFn] = None, 
         "status": manifest.status,
     }
     manifest.extra["summary"] = summary
+    manifest.detector = detector.describe()  # refresh: hosted backend learns the served model id on first use
     store.write_manifest(manifest)
     store.write_json("summary.json", summary)
     return ProcessingResult(Path(cfg.run_dir), n_frames, summary)
