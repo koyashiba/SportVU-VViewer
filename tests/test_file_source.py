@@ -68,7 +68,7 @@ def test_variable_frame_rate_timestamps(tmp_path):
     """Timestamps come from pts; a VFR file must not be treated as constant rate."""
     from tests.conftest import make_marker_video
 
-    p = make_marker_video(tmp_path / "vfr.mp4", n_frames=40, extra=["-vf", "setpts=PTS*(1+gt(N\\,19))", "-vsync", "vfr"])
+    p = make_marker_video(tmp_path / "vfr.mp4", n_frames=40, extra=["-vf", "setpts=PTS*(1+gt(N\\,19))", "-fps_mode", "vfr"])  # -fps_mode needs ffmpeg >= 5.1 (-vsync was removed in 9)
     with FileSource(p, use_index_cache=False) as src:
         ts = src.index.timestamps_s()
         d = np.diff(ts)
