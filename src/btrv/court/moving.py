@@ -42,6 +42,7 @@ class MovingCalibrator:
         self._prev_desc = None
         self.current: Optional[Calibration] = None
         self._since_revalidation = 0
+        self._since_attempt = 0  # frames since the last from-scratch attempt while uncalibrated
 
     def reset(self, calibration: Optional[Calibration] = None) -> None:
         self._prev_gray = None
@@ -81,7 +82,13 @@ class MovingCalibrator:
             return manual
         G = self._frame_to_frame(gray, exclude_boxes)
         if self.current is None or not self.current.valid:
-            cal = auto_calibrate(frame_bgr, None, exclude_boxes, self.court, self.auto_cfg, frame_index)
+            # uncalibrated: a from-scratch search is expensive, so retry only every revalidate_every frames
+            if self.current is not None and self._since_attempt < self.cfg.revalidate_every:
+                self._since_attempt += 1
+                return self.current.invalid_copy("no valid calibration yet (retry pending)")
+            self._since_attempt = 0
+            hint = self.current.H if self.current is not None else None
+            cal = auto_calibrate(frame_bgr, None, exclude_boxes, self.court, self.auto_cfg, frame_index, orientation_hint_H=hint if hint is not None and not np.allclose(hint, np.eye(3)) else None)
             self.current = cal
             self._since_revalidation = 0
             return cal

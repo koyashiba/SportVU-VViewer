@@ -1,0 +1,41 @@
+name: Local RF-DETR smoke (manual)
+
+# Downloads the pinned model weights with the API key and runs local inference on the CPU runner,
+# then uploads the run directory. Heavy (torch + inference-models), so manual only.
+on:
+  workflow_dispatch:
+    inputs:
+      frames:
+        description: number of frames in the panning clip
+        default: "24"
+      max_side:
+        description: downscale inference image to this longest side (0 = native)
+        default: "1280"
+
+jobs:
+  local-model-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ROBOFLOW_API_KEY: ${{ secrets.RF_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - name: Install CPU torch and local inference
+        run: |
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[local-inference]"
+      - name: Run
+        run: |
+          MS=${{ github.event.inputs.max_side }}
+          python scripts/model_smoke.py --backend roboflow_local --compute cpu --frames ${{ github.event.inputs.frames }} ${MS:+--max-side $MS} --out smoke_run_local
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke_run_local
+          path: smoke_run_local
+          if-no-files-found: ignore

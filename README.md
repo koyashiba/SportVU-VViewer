@@ -102,3 +102,16 @@ tests/               pytest suite (synthetic videos generated with ffmpeg)
 ```
 
 Run the tests with `pytest` (needs `ffmpeg` on PATH to synthesise test videos).
+
+## Continuous integration
+
+* `.github/workflows/ci.yml` runs the test suite on Ubuntu, macOS and Windows on every push, then
+  `scripts/model_smoke.py` with the **hosted** backend: it builds a short panning clip from a public
+  frame of the Roboflow project, runs the pinned model through the full pipeline (detector → ByteTrack →
+  team colours → moving-camera court mapping) and fails if no players are detected or no track id
+  persists. The run directory is uploaded as a workflow artifact. The job needs the repository secret
+  `RF_API_KEY` (exported as `ROBOFLOW_API_KEY`); without it the job is skipped.
+* `.github/workflows/model-smoke-local.yml` (manual, *Actions > Local RF-DETR smoke > Run workflow*)
+  installs CPU torch + `inference-models`, downloads the pinned weights with the key and runs the same
+  smoke test with the **local** backend.
+* Locally: `ROBOFLOW_API_KEY=... python scripts/model_smoke.py --backend roboflow_hosted --video my_clip.mp4`.
