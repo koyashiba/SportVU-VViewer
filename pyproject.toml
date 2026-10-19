@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btrv"
+version = "0.1.0"
+description = "Basketball Tracking & Research Viewer: frame-accurate local desktop viewer for basketball video and tracking data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.8",
+    "av>=12",
+    "supervision>=0.26",
+    "trackers>=2.4",
+    "h5py>=3.10",
+    "pydantic>=2.6",
+    "jsonschema>=4.20",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "websockets>=12",
+    "requests>=2.31",
+    "PySide6>=6.6",
+]
+
+[project.optional-dependencies]
+# Local RF-DETR inference with the pinned Roboflow model (downloads weights once, needs ROBOFLOW_API_KEY).
+local-inference = ["inference-models>=0.39"]
+dev = ["pytest>=8", "pytest-qt>=4.4", "httpx>=0.27"]
+
+[project.scripts]
+btrv = "btrv.cli:main"
+btrv-viewer = "btrv.viewer.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+btrv = ["schemas/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

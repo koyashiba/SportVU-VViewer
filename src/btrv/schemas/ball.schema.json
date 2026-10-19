@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://btrv.local/schemas/ball-1.0.json",
+  "title": "btrv.ball 1.0 - externally supplied ball coordinates per frame",
+  "description": "One record per frame (JSON Lines or JSON array). Required for a conforming SportVU export. Coordinates in court feet (sportvu_feet_v1); z is height in feet and may be null.",
+  "type": "object",
+  "required": ["schema", "schema_version", "source_id", "frame_index", "timestamp_s", "x", "y"],
+  "properties": {
+    "schema": {"const": "btrv.ball"},
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+$"},
+    "source_id": {"type": "string", "minLength": 1},
+    "frame_index": {"type": "integer", "minimum": 0},
+    "timestamp_s": {"type": "number"},
+    "coordinate_convention": {"const": "sportvu_feet_v1"},
+    "x": {"type": "number"},
+    "y": {"type": "number"},
+    "z": {"type": ["number", "null"]},
+    "confidence": {"type": ["number", "null"]},
+    "producer": {"type": "string"}
+  }
+}

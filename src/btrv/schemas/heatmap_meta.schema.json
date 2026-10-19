@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://btrv.local/schemas/heatmap-meta-1.0.json",
+  "title": "btrv.heatmap 1.0 - metadata block of a heat-map file",
+  "description": "Stored as HDF5 root attributes (.h5) or as the JSON string in the 'meta' member of an .npz file. Grids live in the 'grid' dataset [N, grid_height, grid_width]; 'frame_index' [N] and 'timestamp_s' [N] align each grid with a source frame. Row 0 is the y_min edge, column 0 the x_min edge of the extent.",
+  "type": "object",
+  "required": ["schema", "schema_version", "source_id", "space", "extent", "grid_width", "grid_height", "value_kind", "normalization"],
+  "properties": {
+    "schema": {"const": "btrv.heatmap"},
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+$"},
+    "source_id": {"type": "string", "minLength": 1},
+    "space": {"enum": ["image_pixels", "court_feet"], "description": "Coordinate space of the extent: full source-frame pixels or sportvu_feet_v1 court feet."},
+    "extent": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4, "description": "[x_min, y_min, x_max, y_max] covered by the grid, in the declared space. Independent of the video resolution."},
+    "grid_width": {"type": "integer", "minimum": 1},
+    "grid_height": {"type": "integer", "minimum": 1},
+    "value_kind": {"enum": ["probability", "confidence"]},
+    "normalization": {"enum": ["sum_to_one", "max_one", "unit_range"], "description": "sum_to_one: each grid sums to 1; max_one: each grid's maximum is 1; unit_range: values in [0,1] with no per-frame constraint."},
+    "image_width": {"type": "integer"},
+    "image_height": {"type": "integer"},
+    "producer": {"type": "string"},
+    "dtype": {"type": "string"}
+  }
+}

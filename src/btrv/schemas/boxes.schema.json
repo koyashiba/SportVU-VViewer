@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://btrv.local/schemas/boxes-1.0.json",
+  "title": "btrv.boxes 1.0 - per-frame bounding boxes",
+  "description": "One record per source frame. Files are JSON Lines (one record per line) or a JSON array of records. The same record is the WebSocket/REST payload.",
+  "type": "object",
+  "required": ["schema", "schema_version", "source_id", "frame_index", "timestamp_s", "image_width", "image_height", "coordinate_convention", "boxes"],
+  "properties": {
+    "schema": {"const": "btrv.boxes"},
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+$"},
+    "source_id": {"type": "string", "minLength": 1, "description": "Identifier of the video source (file stem or user-defined id). Must match the loaded video's source id to be displayed."},
+    "frame_index": {"type": "integer", "minimum": 0, "description": "0-based index of the frame in presentation order."},
+    "timestamp_s": {"type": "number", "description": "Decoded presentation timestamp in seconds (pts * time_base)."},
+    "image_width": {"type": "integer", "minimum": 1},
+    "image_height": {"type": "integer", "minimum": 1},
+    "coordinate_convention": {"const": "image_pixels_xyxy_topleft"},
+    "producer": {"type": "string", "description": "Free text identifying the software that produced the boxes."},
+    "calibration": {
+      "type": "object",
+      "description": "Frame-level court calibration state (written by btrv; optional on import).",
+      "properties": {"valid": {"type": "boolean"}, "confidence": {"type": ["number", "null"]}, "method": {"type": "string"}},
+      "required": ["valid"]
+    },
+    "boxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["xyxy", "class_name", "confidence"],
+        "properties": {
+          "xyxy": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4, "description": "[x1, y1, x2, y2] in source-frame pixels, origin top-left."},
+          "class_name": {"type": "string"},
+          "class_id": {"type": "integer"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "track_id": {"type": ["integer", "null"]},
+          "team": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": {"type": ["integer", "null"], "description": "0 or 1 for the two clustered teams; null when undecided."},
+              "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+              "method": {"type": "string"}
+            },
+            "required": ["id", "confidence"]
+          },
+          "court": {
+            "type": ["object", "null"],
+            "description": "Ground-contact point projected to court feet (sportvu_feet_v1). valid=false means the frame had no usable calibration or the point is off-court.",
+            "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "valid": {"type": "boolean"}, "confidence": {"type": ["number", "null"]}},
+            "required": ["x", "y", "valid"]
+          },
+          "foot_xy": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "Optional explicit ground-contact point in source pixels (defaults to bottom-centre of the box)."},
+          "attrs": {"type": "object"}
+        }
+      }
+    }
+  }
+}
