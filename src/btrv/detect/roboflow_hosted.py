@@ -1,9 +1,12 @@
 """Hosted inference against Roboflow's serverless API with the pinned model id.
 
-Uses the inference server's ``/infer/object_detection`` endpoint (the same one
-``inference_sdk`` calls).  Needs ROBOFLOW_API_KEY and network access; every
-frame is uploaded as JPEG, so this is meant for short excerpts and validation,
-not for whole games.
+Uses the Hosted API v2 route ``POST https://serverless.roboflow.com/{model_id}``
+with a base64 JPEG body (``application/x-www-form-urlencoded``) and the query
+parameters ``api_key`` and ``confidence`` (percent).  ``model_id`` may be the
+pinned model slug (``workspace/model-slug``) or a ``project/version`` id; an
+optional ``extra['fallback_model_id']`` is tried when the primary id returns
+404.  Needs ROBOFLOW_API_KEY and network access; every frame is uploaded, so
+this is meant for short excerpts and validation, not for whole games.
 """
 from __future__ import annotations
 
@@ -30,8 +33,13 @@ class RoboflowHostedDetector(Detector):
         self.session = session or requests.Session()
         self.jpeg_quality = int(cfg.extra.get("jpeg_quality", 92))
         self.retries = int(cfg.extra.get("retries", 3))
-        self.endpoint = cfg.api_url.rstrip("/") + "/infer/object_detection"
+        self.overlap_percent = float(cfg.extra.get("overlap_percent", 30))
+        self.model_ids = [cfg.model_id] + ([cfg.extra["fallback_model_id"]] if cfg.extra.get("fallback_model_id") else [])
+        self.served_model_id: str | None = None
         self.class_names: list[str] = []
+
+    def endpoint(self, model_id: str) -> str:
+        return self.cfg.api_url.rstrip("/") + "/" + model_id.strip("/")
 
     def _encode(self, image_bgr: np.ndarray) -> str:
         import cv2
@@ -42,26 +50,32 @@ class RoboflowHostedDetector(Detector):
         return base64.b64encode(buf.tobytes()).decode("ascii")
 
     def detect(self, image_bgr: np.ndarray) -> list[Detection]:
-        payload = {
-            "api_key": self.api_key,
-            "model_id": self.cfg.model_id,
-            "image": {"type": "base64", "value": self._encode(image_bgr)},
-            "confidence": self.cfg.confidence,
-            "disable_active_learning": True,
-        }
+        body = self._encode(image_bgr)
+        params = {"api_key": self.api_key, "confidence": round(self.cfg.confidence * 100, 2), "overlap": self.overlap_percent, "format": "json"}
+        candidates = [self.served_model_id] if self.served_model_id else self.model_ids
         last_err: Exception | None = None
-        for attempt in range(self.retries):
-            try:
-                r = self.session.post(self.endpoint, json=payload, timeout=60)
-                r.raise_for_status()
-                data = r.json()
-                if isinstance(data, list):
-                    data = data[0]
-                return self.parse_predictions(data, image_bgr.shape[1], image_bgr.shape[0])
-            except Exception as e:  # pragma: no cover - network
-                last_err = e
-                time.sleep(1.5 * (attempt + 1))
-        raise RuntimeError(f"hosted inference failed after {self.retries} attempts: {last_err}")
+        for model_id in candidates:
+            for attempt in range(self.retries):
+                try:
+                    r = self.session.post(self.endpoint(model_id), params=params, data=body, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=90)
+                    if r.status_code == 404:
+                        last_err = RuntimeError(f"model id {model_id!r} not found on {self.cfg.api_url} (404)")
+                        break  # try the next id
+                    r.raise_for_status()
+                    data = r.json()
+                    if isinstance(data, list):
+                        data = data[0]
+                    self.served_model_id = model_id
+                    return self.parse_predictions(data, image_bgr.shape[1], image_bgr.shape[0])
+                except requests.HTTPError as e:  # pragma: no cover - network
+                    last_err = e
+                    if e.response is not None and e.response.status_code in (401, 403):
+                        raise RuntimeError(f"hosted inference rejected the API key ({e.response.status_code}); check {self.cfg.api_key_env}") from e
+                    time.sleep(1.5 * (attempt + 1))
+                except Exception as e:  # pragma: no cover - network
+                    last_err = e
+                    time.sleep(1.5 * (attempt + 1))
+        raise RuntimeError(f"hosted inference failed: {last_err}")
 
     @staticmethod
     def parse_predictions(data: dict[str, Any], width: int, height: int) -> list[Detection]:
@@ -76,4 +90,5 @@ class RoboflowHostedDetector(Detector):
         return out
 
     def describe(self) -> dict[str, Any]:
-        return {"name": self.name, "model_id": self.cfg.model_id, "runtime": "roboflow-serverless", "api_url": self.cfg.api_url, "confidence": self.cfg.confidence}
+        return {"name": self.name, "model_id": self.cfg.model_id, "served_model_id": self.served_model_id, "candidate_model_ids": self.model_ids,
+                "runtime": "roboflow-serverless-v2", "api_url": self.cfg.api_url, "confidence": self.cfg.confidence}

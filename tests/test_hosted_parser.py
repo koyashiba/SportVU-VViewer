@@ -21,3 +21,43 @@ def test_parse_hosted_predictions_centre_based_to_xyxy():
     assert d.xyxy == (1310.0, 686.0, 1454.0, 1042.0)
     assert dets[1].xyxy == (1210.5 - 85.5, 735.5 - 131.5, 1210.5 + 85.5, 735.5 + 131.5)
     assert abs(d.confidence - 0.9445) < 1e-3
+
+
+def test_hosted_request_route_and_fallback(monkeypatch):
+    """Hosted API v2 route: POST {api_url}/{model_id}?api_key&confidence(percent) with a base64 body; 404 -> fallback id."""
+    import numpy as np
+
+    from btrv.detect.base import DetectorConfig
+
+    monkeypatch.setenv("ROBOFLOW_API_KEY", "k")
+    calls = []
+
+    class Resp:
+        def __init__(self, status, payload):
+            self.status_code = status
+            self._p = payload
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._p
+
+    class Session:
+        def post(self, url, params=None, data=None, headers=None, timeout=None):
+            calls.append((url, params, headers))
+            if url.endswith("/ws/slug"):
+                return Resp(404, {})
+            return Resp(200, CAPTURED)
+
+    cfg = DetectorConfig(backend="roboflow_hosted", model_id="ws/slug", confidence=0.3, extra={"fallback_model_id": "proj/2", "retries": 1})
+    det = RoboflowHostedDetector(cfg, session=Session())
+    dets = det.detect(np.zeros((32, 32, 3), np.uint8))
+    assert len(dets) == 3
+    assert calls[0][0] == "https://serverless.roboflow.com/ws/slug"
+    assert calls[1][0] == "https://serverless.roboflow.com/proj/2"
+    assert calls[0][1]["api_key"] == "k" and calls[0][1]["confidence"] == 30.0
+    assert calls[0][2]["Content-Type"] == "application/x-www-form-urlencoded"
+    assert det.served_model_id == "proj/2"
+    det.detect(np.zeros((32, 32, 3), np.uint8))
+    assert calls[-1][0].endswith("/proj/2") and len(calls) == 3  # served id is remembered

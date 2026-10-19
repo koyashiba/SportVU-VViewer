@@ -123,7 +123,8 @@ def main() -> int:
         source_id="smoke",
         camera_mode="moving",
         frame_stop=a.frames,
-        detector=DetectorConfig(backend=a.backend, confidence=a.confidence, compute=a.compute, max_inference_side=a.max_side),
+        detector=DetectorConfig(backend=a.backend, confidence=a.confidence, compute=a.compute, max_inference_side=a.max_side,
+                                extra={"fallback_model_id": f"{PROJECT}/2"} if a.backend == "roboflow_hosted" else {}),
     )
     res = process_video(cfg, progress=lambda i, n, m: print(f"  {i}/{n} {m}", flush=True) if i % 4 == 0 or i == n else None)
     s = res.summary
