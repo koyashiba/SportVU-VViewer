@@ -1,0 +1,10 @@
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":0,"timestamp_s":0.0,"coordinate_convention":"sportvu_feet_v1","x":40.0,"y":25.0,"z":null,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":1,"timestamp_s":0.04,"coordinate_convention":"sportvu_feet_v1","x":40.5,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":2,"timestamp_s":0.08,"coordinate_convention":"sportvu_feet_v1","x":41.0,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":3,"timestamp_s":0.12,"coordinate_convention":"sportvu_feet_v1","x":41.5,"y":25.0,"z":null,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":4,"timestamp_s":0.16,"coordinate_convention":"sportvu_feet_v1","x":42.0,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":5,"timestamp_s":0.2,"coordinate_convention":"sportvu_feet_v1","x":42.5,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":6,"timestamp_s":0.24,"coordinate_convention":"sportvu_feet_v1","x":43.0,"y":25.0,"z":null,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":7,"timestamp_s":0.28,"coordinate_convention":"sportvu_feet_v1","x":43.5,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":8,"timestamp_s":0.32,"coordinate_convention":"sportvu_feet_v1","x":44.0,"y":25.0,"z":6.0,"confidence":0.8}
+{"schema":"btrv.ball","schema_version":"1.0","source_id":"example_game","frame_index":9,"timestamp_s":0.36,"coordinate_convention":"sportvu_feet_v1","x":44.5,"y":25.0,"z":null,"confidence":0.8}

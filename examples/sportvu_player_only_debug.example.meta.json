@@ -1,0 +1,39 @@
+{
+  "schema": "btrv.sportvu_export_meta",
+  "schema_version": "1.0",
+  "conforming": false,
+  "kind": "player_only_debug_NONSTANDARD",
+  "source_id": "example_game",
+  "coordinate_convention": "sportvu_feet_v1",
+  "reference_viewer": "https://github.com/linouk23/NBA-Player-Movements",
+  "moment_layout": "[quarter, unix_time_ms, game_clock_s, shot_clock_s, null, [[team_id, player_id, x_ft, y_ft, z_ft], ...]]",
+  "ball": "absent (NONSTANDARD)",
+  "placeholders": {
+    "quarter": 0,
+    "game_clock_s": 0.0,
+    "shot_clock_s": 0.0,
+    "unix_time_ms": "epoch_ms (0) + round(source timestamp_s * 1000)",
+    "ball_z_ft_when_unknown": 0.0,
+    "player_z_ft": 0.0,
+    "team_ids": {
+      "team_0": 1610612737,
+      "team_1": 1610612738,
+      "note": "placeholder NBA ids so the reference viewer's colour table resolves"
+    },
+    "player_id": "btrv track id",
+    "debug_unknown_team_id": 0,
+    "debug_untracked_player_id": -2
+  },
+  "stats": {
+    "frames": 10,
+    "entities": 60,
+    "dropped_no_team": 0,
+    "dropped_no_track": 0,
+    "dropped_invalid_court": 0,
+    "frames_without_calibration": 0
+  },
+  "frame_range": [
+    0,
+    9
+  ]
+}

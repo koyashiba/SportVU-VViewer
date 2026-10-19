@@ -12,3 +12,4 @@ runs/
 !examples/**/*.mp4
 .venv/
 venv/
+tests/.cache/

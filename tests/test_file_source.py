@@ -62,3 +62,31 @@ def test_small_cache_budget_still_accurate(marker_video):
         for i in [40, 39, 38, 0, 59, 20]:
             _, f = src.read(i)
             assert marker_index(f) == i
+
+
+def test_variable_frame_rate_timestamps(tmp_path):
+    """Timestamps come from pts; a VFR file must not be treated as constant rate."""
+    from tests.conftest import make_marker_video
+
+    p = make_marker_video(tmp_path / "vfr.mp4", n_frames=40, extra=["-vf", "setpts=PTS*(1+gt(N\\,19))", "-vsync", "vfr"])
+    with FileSource(p, use_index_cache=False) as src:
+        ts = src.index.timestamps_s()
+        d = np.diff(ts)
+        assert d[:15].mean() < d[25:].mean() * 0.75  # second half is slower
+        assert src.info.frame_count == 40
+        for i in [0, 19, 20, 21, 39, 10]:
+            info, f = src.read(i)
+            assert marker_index(f) == i
+            assert info.timestamp_s == pytest.approx(ts[i])
+        assert src.index.frame_for_timestamp(ts[25] + 1e-4) == 25
+        assert src.index.frame_for_timestamp(ts[25] - 1e-4) == 24
+
+
+def test_mkv_container(tmp_path):
+    from tests.conftest import make_marker_video
+
+    p = make_marker_video(tmp_path / "m.mkv", n_frames=30)
+    with FileSource(p, use_index_cache=False) as src:
+        assert src.info.frame_count == 30
+        for i in [29, 3, 17]:
+            assert marker_index(src.read(i)[1]) == i
